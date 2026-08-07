@@ -1,0 +1,14 @@
+{
+    "model_name": "EcoRal XGBoost",
+    "version": "1.0",
+    "model_path": "models/ecoral_xgb_model.pkl",
+    "feature_names_path": "models/feature_names.pkl",
+    "threshold_path": "models/prediction_threshold.pkl",
+    "features": [
+        "sea_surface_temperature",
+        "lat",
+        "lon"
+    ],
+    "target": "Bleaching_Risk",
+    "threshold": 0.5
+}
