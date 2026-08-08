@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -45,6 +45,15 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return [o.strip() for o in v.split(",")]
         return v  # type: ignore[return-value]
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> Settings:
+        if self.app_env == "production":
+            if "dev-secret" in self.jwt_secret_key or len(self.jwt_secret_key) < 32:
+                raise ValueError(
+                    "JWT_SECRET_KEY must be configured with a secure random secret of at least 32 characters in production."
+                )
+        return self
 
     @property
     def is_production(self) -> bool:
