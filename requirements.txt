@@ -1,11 +1,18 @@
-xgboost
-scikit-learn
-pandas
-numpy
-matplotlib
-seaborn
-shap
-joblib
-streamlit
-fastapi
-uvicorn
+# ML Core dependencies (pinned for model compatibility)
+# IMPORTANT: The model artifact models/ecoral_xgb_model.pkl was serialized with XGBoost 1.x/2.x.
+# Do NOT upgrade xgboost without re-exporting the model via Booster.save_model() first.
+xgboost==2.1.3
+scikit-learn>=1.3,<2.0
+pandas>=2.0,<3.0
+numpy>=1.26,<3.0
+matplotlib>=3.7
+seaborn>=0.13
+shap>=0.44
+joblib>=1.3
+
+# Development / legacy app entrypoints
+streamlit>=1.30  # kept for backward compatibility, not used in production
+
+# Backend (duplicate of backend/requirements.txt — kept here so `pip install -r requirements.txt` covers all ML deps)
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30

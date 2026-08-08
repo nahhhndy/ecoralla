@@ -1,0 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg-dark: #07131E;
+  --surface: #0C1C2A;
+  --card-bg: #122535;
+  --border-color: #24475F;
+  --primary: #18C8FF;
+  --accent: #5EEAD4;
+  --warning: #FFB547;
+  --danger: #FF5A6E;
+  --success: #27D980;
+  --text-main: #F5FAFC;
+  --text-muted: #8FA6B8;
+
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  background-image: 
+    radial-gradient(circle at 15% 20%, rgba(24, 200, 255, 0.04) 0%, transparent 45%),
+    radial-gradient(circle at 85% 75%, rgba(94, 234, 212, 0.03) 0%, transparent 45%);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #07131E; }
+::-webkit-scrollbar-thumb { background: #1F3A4E; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #18C8FF; }
+
+/* Custom UI Utility Classes */
+.bg-surface { background-color: var(--surface); }
+.bg-card-custom { background-color: var(--card-bg); }
+.border-custom { border-color: var(--border-color); }
+
+.card-hover-elevation {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+.card-hover-elevation:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.4), 0 0 16px -2px rgba(24, 200, 255, 0.12);
+  border-color: rgba(24, 200, 255, 0.35);
+}
+
+/* Leaflet map dark mode overrides */
+.leaflet-container {
+  background: #07131E !important;
+  font-family: var(--font-sans);
+  z-index: 0;
+}
+.leaflet-tile-pane { filter: brightness(0.85) saturate(0.75); }
+.leaflet-control-zoom a { background: #0C1C2A !important; color: #18C8FF !important; border-color: #24475F !important; }
+.leaflet-popup-content-wrapper { background: #0C1C2A !important; color: #F5FAFC !important; border: 1px solid #24475F !important; border-radius: 10px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important; }
+.leaflet-popup-tip { background: #0C1C2A !important; }
