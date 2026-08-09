@@ -10,6 +10,7 @@ jobs:
   backend-test:
     name: Backend Tests
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:16-alpine
@@ -24,11 +25,14 @@ jobs:
           --health-retries 5
         ports:
           - 5432:5432
+
       redis:
         image: redis:7-alpine
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
         ports:
           - 6379:6379
 
@@ -38,13 +42,22 @@ jobs:
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          python-version: "3.12"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install -r backend/requirements.txt
+
+      - name: Initialize test database
+        env:
+          DATABASE_URL: postgresql+asyncpg://ecoral:password@localhost:5432/ecoral_test
+          REDIS_URL: redis://localhost:6379/0
+          JWT_SECRET_KEY: test-secret-key-for-ci-only
+          APP_ENV: test
+        run: |
+          python -c "import asyncio; from backend.app.db.session import create_tables; asyncio.run(create_tables())"
 
       - name: Run linter
         run: ruff check src/ backend/ tests/ || true
@@ -67,6 +80,7 @@ jobs:
   frontend-check:
     name: Frontend Type Check & Build
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: frontend
@@ -77,8 +91,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
