@@ -17,30 +17,43 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    # ---------------------------------------------------------
     # Application
+    # ---------------------------------------------------------
     app_name: str = "EcoRal"
     app_env: str = "development"
     app_host: str = "0.0.0.0"
     app_port: int = 8000
     log_level: str = "INFO"
 
+    # ---------------------------------------------------------
     # Database
+    # ---------------------------------------------------------
     database_url: str = (
         "postgresql+asyncpg://ecoral:password@localhost:5432/ecoral"
     )
 
+    # ---------------------------------------------------------
     # Redis
+    # ---------------------------------------------------------
     redis_url: str = "redis://localhost:6379/0"
 
+    # ---------------------------------------------------------
     # JWT
-    jwt_secret_key: str = "dev-secret-change-in-production-minimum-32-chars"
+    # ---------------------------------------------------------
+    jwt_secret_key: str = (
+        "dev-secret-change-in-production-minimum-32-chars"
+    )
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
     refresh_token_expire_days: int = 7
 
+    # ---------------------------------------------------------
     # CORS
-    # Keep this as a string so Pydantic Settings does not try to
-    # JSON-decode the environment variable before validation.
+    # ---------------------------------------------------------
+    # Keep the environment variable as a STRING.
+    # This prevents Pydantic Settings from trying to
+    # JSON-decode CORS_ORIGINS automatically.
     cors_origins_raw: str = Field(
         default="http://localhost:3000,http://localhost:3001",
         validation_alias="CORS_ORIGINS",
@@ -54,17 +67,19 @@ class Settings(BaseSettings):
         if not value:
             return []
 
-        # Also support JSON list format:
+        # Support JSON format:
         # ["http://localhost:3000", "https://example.com"]
         if value.startswith("["):
             try:
                 parsed = json.loads(value)
+
                 if isinstance(parsed, list):
                     return [
                         str(origin).strip()
                         for origin in parsed
                         if str(origin).strip()
                     ]
+
             except json.JSONDecodeError:
                 pass
 
@@ -76,6 +91,9 @@ class Settings(BaseSettings):
             if origin.strip()
         ]
 
+    # ---------------------------------------------------------
+    # Production validation
+    # ---------------------------------------------------------
     @model_validator(mode="after")
     def validate_production_secrets(self) -> Settings:
         if self.app_env == "production":
@@ -90,6 +108,9 @@ class Settings(BaseSettings):
 
         return self
 
+    # ---------------------------------------------------------
+    # Environment helpers
+    # ---------------------------------------------------------
     @property
     def is_production(self) -> bool:
         return self.app_env == "production"
@@ -97,4 +118,5 @@ class Settings(BaseSettings):
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
+    """Return the cached application settings."""
     return Settings()
