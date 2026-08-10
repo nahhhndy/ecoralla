@@ -7,34 +7,60 @@ on:
     branches: [main]
 
 jobs:
+  verify-ci:
+    name: Verify CI Result
+    runs-on: ubuntu-latest
+    outputs:
+      passed: ${{ steps.check.outputs.passed }}
+    steps:
+      - name: Check CI result
+        id: check
+        run: |
+          echo "CI conclusion: ${{ github.event.workflow_run.conclusion }}"
+          echo "CI branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "CI commit: ${{ github.event.workflow_run.head_sha }}"
+
+          if [ "${{ github.event.workflow_run.conclusion }}" = "success" ]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+          fi
+
   deploy-backend:
     name: Deploy Backend to Render
+    needs: verify-ci
+    if: needs.verify-ci.outputs.passed == 'true'
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
     steps:
       - name: Trigger Render Deploy
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" \
+          curl --fail --silent --show-error \
+            -X POST "$RENDER_DEPLOY_HOOK_URL" \
             -H "Content-Type: application/json" \
             -d '{}'
-        # Set RENDER_DEPLOY_HOOK_URL in GitHub repository secrets
-        # Render → Service → Settings → Deploy Hooks → Copy URL
 
   deploy-frontend:
     name: Deploy Frontend to Vercel
+    needs: verify-ci
+    if: needs.verify-ci.outputs.passed == 'true'
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
     defaults:
       run:
         working-directory: frontend
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install Vercel CLI
@@ -48,6 +74,6 @@ jobs:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
         run: |
           npm ci
-          vercel pull --yes --environment=production --token=$VERCEL_TOKEN
-          vercel build --prod --token=$VERCEL_TOKEN
-          vercel deploy --prebuilt --prod --token=$VERCEL_TOKEN
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          vercel build --prod --token="$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
