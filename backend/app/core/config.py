@@ -1,9 +1,11 @@
 """Application configuration via Pydantic Settings."""
+
 from __future__ import annotations
 
+import json
 from functools import lru_cache
 
-from pydantic import field_validator, model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -37,22 +39,55 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 7
 
     # CORS
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+    # Keep this as a string so Pydantic Settings does not try to
+    # JSON-decode the environment variable before validation.
+    cors_origins_raw: str = Field(
+        default="http://localhost:3000,http://localhost:3001",
+        validation_alias="CORS_ORIGINS",
+    )
 
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def parse_cors(cls, v: object) -> list[str]:
-        if isinstance(v, str):
-            return [o.strip() for o in v.split(",")]
-        return v  # type: ignore[return-value]
+    @property
+    def cors_origins(self) -> list[str]:
+        """Return CORS origins as a normalized list."""
+        value = self.cors_origins_raw.strip()
+
+        if not value:
+            return []
+
+        # Also support JSON list format:
+        # ["http://localhost:3000", "https://example.com"]
+        if value.startswith("["):
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    return [
+                        str(origin).strip()
+                        for origin in parsed
+                        if str(origin).strip()
+                    ]
+            except json.JSONDecodeError:
+                pass
+
+        # Support comma-separated format:
+        # http://localhost:3000,https://example.com
+        return [
+            origin.strip()
+            for origin in value.split(",")
+            if origin.strip()
+        ]
 
     @model_validator(mode="after")
     def validate_production_secrets(self) -> Settings:
         if self.app_env == "production":
-            if "dev-secret" in self.jwt_secret_key or len(self.jwt_secret_key) < 32:
+            if (
+                "dev-secret" in self.jwt_secret_key
+                or len(self.jwt_secret_key) < 32
+            ):
                 raise ValueError(
-                    "JWT_SECRET_KEY must be configured with a secure random secret of at least 32 characters in production."
+                    "JWT_SECRET_KEY must be at least 32 characters "
+                    "and must not use the development secret in production."
                 )
+
         return self
 
     @property
