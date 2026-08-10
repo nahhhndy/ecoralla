@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       passed: ${{ steps.check.outputs.passed }}
+
     steps:
       - name: Check CI result
         id: check
