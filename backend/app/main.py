@@ -44,6 +44,7 @@ def create_app() -> FastAPI:
     app.add_middleware(
     CORSMiddleware,
         allow_origins=[
+            "https://ecoral-main.vercel.app",
             "https://ecoral-main-2rqa.vercel.app",
             "http://localhost:3000",
             "http://127.0.0.1:3000",
